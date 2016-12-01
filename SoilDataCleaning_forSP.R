@@ -358,8 +358,8 @@ CROT_by_SITE$Total <- rowSums(CROT_by_SITE[-1], na.rm = T)
 
 # FILTERING SOIL ----------------------------------------------------
 
-soil_bd <- soil %>% filter(varname == "SOIL1")
-soil_oc <- soil %>% filter(varname == "SOIL13")
+
+
 
 # PLOT DATA =========================================================
 library(tidyverse)
