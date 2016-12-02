@@ -8,6 +8,8 @@ load("C:/Users/Gio/Documents/Work/CSCAP/Sustainable Corn Paper/big_soil_data.RDa
 
 library(tidyr)
 library(ggplot2)
+library(scales)
+library(stringr)
 
 # BELOW DETACTION LIMIT data ---------------------------------------- <<< NEED TO ADD TO THE MAIN CODE
 # get row numbers of BDL values
@@ -420,20 +422,351 @@ soil_all_new_data %>%
 merge(CS, plots_data[- which(names(plots_data) %in% c("plotid"))], by = "id", all.x = TRUE) %>%     # names()
   select(site, plotid, year, CS, crot, crot_name, rotation, tillage, drainage, nitrogen) -> CS_plot
 
-merge(CS_plot, site_metadata[which(names(site_metadata) %in% c("UniqueID", "Latitude", "Longitude", "Plot Size (ha)"))], 
+# calculate average plot site for each site
+site_metadata$`Plot Size (ha)` %>% 
+  as.numeric() %>%
+  is.na() %>%
+  site_metadata[., c("UniqueID", "Number of Plots/ Subplots", "Site Area (ha)", "Plot Size (ha)")] 
+site_metadata$`Ave Plot Size (ha)` <- as.numeric(site_metadata$`Plot Size (ha)`)
+site_metadata$`Ave Plot Size (ha)`[site_metadata$UniqueID == "HICKS.B"] <- round(40.8 / 6, 1)
+site_metadata$`Ave Plot Size (ha)`[site_metadata$UniqueID == "HICKS.G"] <- round(20.2 / 12, 1)
+site_metadata$`Ave Plot Size (ha)`[site_metadata$UniqueID == "SERF"] <- round(17 / 24, 1)
+
+
+merge(CS_plot, site_metadata[which(names(site_metadata) %in% c("UniqueID", 
+                                                               "Latitude", 
+                                                               "Longitude", 
+                                                               "County", 
+                                                               "State", 
+                                                               "Ave Plot Size (ha)"))], 
       by.x = "site", by.y = "UniqueID", all.x = TRUE) -> CS_plot
 
-# PLOT TIME -------------------------------------
+# PLOT TIME ========================================================================================
+setwd("C:/Users/Gio/Documents/GitHub/CSCAP/CAP_Fig/Soil_Paper")
+
 CS_plot %>% 
   group_by(crot, site) %>% 
   summarise(total.plots = n()/2) %>%            # divide by two because plots are counted twice for FIRST and LAST years
   spread(key = crot, value = total.plots) -> CS_summary
+# to print 
+CS_summary[is.na(CS_summary)] <- "-"
+
+# aggregated CS by sites --------------------
+CS_plot %>%
+  group_by(site) %>%
+  select(site, CS, Latitude, Longitude, State, County, `Ave Plot Size (ha)`) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  mutate(site = factor(site, levels = site[order(Latitude)])) %>% 
+  mutate(State = as.factor(State)) -> CS_site_plot
+
+# PLOT 1
+CS_site_plot %>%
+  ggplot(aes(x=site, y=CS)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "SITE ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(0, 250000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light() -> PLOT1
+
+#1.a
+PLOT1 + ggtitle("Average CS by Site")
+ggsave(filename = "plot01.png", width = 12, dpi = 300)
+
+#1.b
+PLOT1 + 
+  facet_grid(~ State) + 
+  theme(axis.text.x = element_text(angle = 90))
+ggsave(filename = "plot01b.png", width = 12, dpi = 300)
+
+#1.c
+CS_site_plot %>%
+  ggplot(aes(x=site, y=CS, fill = State)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "SITE ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(0, 250000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light()
+ggsave(filename = "plot01c.png", width = 12, dpi = 300)
 
 
- 
+# aggregated CS by sites and first-last year (fly) -------------------
+CS_plot %>%
+  group_by(site, plotid) %>%
+  mutate(fly = ifelse(year == max(year), "last", "first")) %>% 
+  select(site, plotid, CS, Latitude, Longitude, State, `Ave Plot Size (ha)`, fly) %>%
+  spread(fly, CS) %>%
+  mutate(CS_diff = last - first) %>% 
+  group_by(site) %>%
+  select(site, CS_diff, first, last, Latitude, Longitude, State, `Ave Plot Size (ha)`) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  mutate(site = factor(site, levels = site[order(Latitude)])) %>% 
+  mutate(State = as.factor(State)) -> CS_site_fly_plot
 
-# EXAMPLE of modifying subset of df via dplr
-#b %>% mutate(depth = ifelse(depth == "0 - 10" & year == "2015", "10 cm", depth))
+# PLOT 2
+CS_site_fly_plot %>%
+  ggplot(aes(x=site, y=CS_diff)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "SITE ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(-100000, 100000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light() -> PLOT2
+
+#2.a
+PLOT2 + ggtitle("Average CS Difference between the First and the Last Data Years by Site")
+ggsave(filename = "plot02.png", width = 12, dpi = 300)
+
+#2.b
+PLOT2 + 
+  facet_grid(~ State) + 
+  theme(axis.text.x = element_text(angle = 90))
+ggsave(filename = "plot02b.png", width = 12, dpi = 300)
+
+#2.c
+CS_site_fly_plot %>%
+  ggplot(aes(x=site, y=CS_diff, fill = State)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "SITE ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(-100000, 100000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light()
+ggsave(filename = "plot02c.png", width = 12, dpi = 300)
+
+
+
+
+
+
+# aggregated CS by State --------------------
+CS_plot %>%
+  group_by(State) %>%
+  select(CS, Latitude, Longitude, State) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  mutate(State = factor(State, levels = State[order(Latitude)])) -> CS_state_plot
+
+# PLOT 3
+CS_state_plot %>%
+  ggplot(aes(x=State, y=CS)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "US STATE") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(0, 250000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light() -> PLOT3
+
+#3.a
+PLOT3 + ggtitle("Average CS by State")
+ggsave(filename = "plot03.png", width = 12, dpi = 300)
+
+
+# aggregated CS by State and first-last year (fly) -------------------
+CS_plot %>%
+  group_by(site, plotid) %>%
+  mutate(fly = ifelse(year == max(year), "last", "first")) %>% 
+  select(site, plotid, CS, Latitude, Longitude, State, `Ave Plot Size (ha)`, fly) %>%
+  spread(fly, CS) %>%
+  mutate(CS_diff = last - first) %>% 
+  group_by(State) %>%
+  select(State, CS_diff, first, last, Latitude, Longitude) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  mutate(State = factor(State, levels = State[order(Latitude)])) -> CS_state_fly_plot
+
+# PLOT 4
+CS_state_fly_plot %>%
+  ggplot(aes(x=State, y=CS_diff)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "US STATE") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(-50000, 50000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light() -> PLOT4
+
+#4.a
+PLOT4 + ggtitle("Average CS Difference between the First and the Last Data Years by State")
+ggsave(filename = "plot04.png", width = 12, dpi = 300)
+
+
+
+# aggregated CS by Rotation --------------------
+CS_plot %>%
+  group_by(crot) %>%
+  select(crot, crot_name, CS) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  mutate(crot = as.factor(crot)) -> CS_crot_plot
+
+# PLOT 5
+CS_crot_plot %>%
+  mutate(color = ifelse(crot == "CR05", "orange", "grey40")) %>%
+  ggplot(aes(x=crot, y=CS, fill=I(color))) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "Crop Rotation ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(0, 150000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  theme_bw() -> PLOT5
+
+#5.a
+PLOT5 + 
+  ggtitle("Average CS by Crop Rotation") + 
+  geom_text(aes(label=str_wrap(crot_name, width=8)), vjust=-0.5, size = 4)
+ggsave(filename = "plot05.png", width = 12, dpi = 300)
+
+
+# aggregated CS by Rotation and first-last year (fly) -------------------
+CS_plot %>%
+  group_by(site, plotid) %>%
+  mutate(fly = ifelse(year == max(year), "last", "first")) %>% 
+  select(site, plotid, crot, crot_name, CS, fly) %>%
+  spread(fly, CS) %>%
+  mutate(CS_diff = last - first) %>% 
+  group_by(crot) %>%
+  select(crot, crot_name, CS_diff, first, last) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  mutate(crot = as.factor(crot)) -> CS_crot_fly_plot
+
+# PLOT 6
+CS_crot_fly_plot %>%
+  mutate(color = ifelse(crot == "CR05", "orange", "grey40")) %>%
+  ggplot(aes(x=crot, y=CS_diff, fill = I(color))) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(name = "Crop Rotaion ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(-15000, 15000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light() -> PLOT6
+
+#6.a
+PLOT6 + 
+  ggtitle("Average CS Difference between the First and the Last Data Years by Crop Rotation") +
+  geom_text(aes(label=str_wrap(crot_name, width = 10)), hjust = "outward", size = 4)
+ggsave(filename = "plot06.png", width = 12, dpi = 300)
+
+
+
+
+
+# aggregated CS by Rotation and others --------------------
+CS_plot %>% 
+  mutate(tillage = ifelse(tillage == "TIL2", "CT", "NT")) %>%       #TIL4 becomes No-Till too
+  mutate(drainage = ifelse(drainage %in% c("DWM2", "DWM3", "DWM4", "DWM5"), "Drained", "Not Drained")) %>%
+  group_by(crot, tillage, drainage) %>%
+  select(crot, crot_name, tillage, drainage, CS) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  ungroup() %>%
+  mutate(crot = as.factor(crot)) %>%
+  mutate(tillage = as.factor(tillage)) %>%
+  mutate(drainage = as.factor(drainage)) -> CS_crot_plus_plot
+
+# PLOT 7
+CS_crot_plus_plot %>%
+  mutate(color = ifelse(crot == "CR05" & tillage == "CT" & drainage == "Not Drained", "orange", "grey40")) %>%
+  ggplot(aes(x=crot, y=CS, fill=I(color))) + 
+  geom_bar(stat = "identity") +
+  facet_grid(tillage ~ drainage) +
+  scale_x_discrete(name = "Crop Rotation ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(0, 200000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  theme_bw() -> PLOT7
+
+#7.a
+PLOT7 + 
+  ggtitle("Average CS by Crop Rotation grouped by Drainage and Tillage") + 
+  geom_text(aes(label=str_wrap(crot_name, width=12)), vjust=-0.5, size = 2.5)
+ggsave(filename = "plot07.png", width = 12, dpi = 300)
+
+
+# aggregated CS by Rotation and other in first-last year (fly) -------------------
+CS_plot %>%
+  group_by(site, plotid) %>%
+  mutate(fly = ifelse(year == max(year), "last", "first")) %>% 
+  select(site, plotid, crot, crot_name, tillage, drainage, CS, fly) %>%
+  spread(fly, CS) %>%
+  mutate(CS_diff = last - first) %>% 
+  mutate(tillage = ifelse(tillage == "TIL2", "CT", "NT")) %>%       #TIL4 becomes No-Till too
+  mutate(drainage = ifelse(drainage %in% c("DWM2", "DWM3", "DWM4", "DWM5"), "Drained", "Not Drained")) %>%
+  group_by(crot, tillage, drainage) %>%
+  select(crot, crot_name, tillage, drainage, CS_diff, first, last) %>%
+  summarise_each(funs(if(is.numeric(.)) mean(., na.rm = TRUE) else first(.))) %>%
+  ungroup() %>%
+  mutate(crot = as.factor(crot)) %>%
+  mutate(tillage = as.factor(tillage)) %>%
+  mutate(drainage = as.factor(drainage)) -> CS_crot_plus_fly_plot
+
+
+# PLOT 8
+CS_crot_plus_fly_plot %>%
+  mutate(color = ifelse(crot == "CR05" & tillage == "CT" & drainage == "Not Drained", "orange", "grey40")) %>%
+  ggplot(aes(x=crot, y=CS_diff, fill=I(color))) + 
+  geom_bar(stat = "identity") +
+  facet_grid(tillage ~ drainage) +
+  scale_x_discrete(name = "Crop Rotaion ID") +
+  scale_y_continuous(name = "CS (kg C/ha)",
+                     limits = c(-40000, 28000),
+                     labels = comma) + 
+  theme(axis.title.x = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+        axis.title.y = element_text(face="bold", colour="goldenrod", size=16),
+        axis.text.y  = element_text(size=12)) +
+  coord_flip() +
+  theme_light() -> PLOT8
+
+#8.a
+PLOT8 + 
+  ggtitle("Average CS Difference between the First and the Last Data Years by Crop Rotation grouped by Drainage and Tillage") +
+  geom_text(aes(label=str_wrap(crot_name, width = 10)), hjust = "outward", size = 2.5)
+ggsave(filename = "plot08.png", width = 12, dpi = 300)
+
+
+geom_text(aes(label=str_wrap(crot_name, width=12)), vjust=-0.5, size = 2.5)
+
+#
 
 
 
