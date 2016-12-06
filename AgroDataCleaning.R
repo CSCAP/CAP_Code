@@ -125,7 +125,8 @@ library(scales)
 library(lubridate)
 
 # create directory/folder to store current boxplots
-dir.create(paste0(getwd(), "/GitHub/CSCAP/CAP_Fig/Agro/boxplots/", today()))
+new_dir <- paste0(getwd(), "/GitHub/CSCAP/CAP_Fig/Agro/boxplots/", Sys.Date())
+dir.create(new_dir)
 
 # count number of observations per site per variable
 agro %>% 
@@ -155,7 +156,7 @@ for (i in 1:nlevels(agro$varname)) {
               aes(y = 0, label = count, colour = I("goldenrod3")), 
               vjust = 2)
   ggsave(myplot, filename = paste("CAP_", levels(agro$varname)[i], ".png", sep = ""), 
-         path = paste0("~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/", today()),
+         path = new_dir,
          width = 12)
 }
 rm(varname, i)
@@ -172,7 +173,7 @@ ggplot(data = agro[agro$varname == "AGR1" & agro$site == "ONFARM.SENECA1", ],
                      labels = comma) +
   ggtitle("ONFARM.SENECA1")
 ggsave(filename = "AGR1_ONFARM.SENECA1.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 # AGR10 at HOYTVILLE.LTR
@@ -184,7 +185,7 @@ ggplot(data = agro[agro$varname == "AGR10" & agro$site == "HOYTVILLE.LTR", ],
                      labels = comma) +
   ggtitle("HOYTVILLE.LTR")
 ggsave(filename = "AGR10_HOYTVILLE.LTR.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -197,7 +198,7 @@ ggplot(data = agro[agro$varname == "AGR14" & agro$site == "SEPAC", ],
                      labels = comma) +
   ggtitle("SEPAC")
 ggsave(filename = "AGR14_SEPAC.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -210,7 +211,7 @@ ggplot(data = agro[agro$varname == "AGR18" & agro$site == "KELLOGG", ],
                      labels = comma) +
   ggtitle("KELLOGG")
 ggsave(filename = "AGR18_KELLOGG.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -223,7 +224,7 @@ ggplot(data = agro[agro$varname == "AGR20" & agro$site %in% c("KELLOGG", "FREEMA
   scale_y_continuous(name = var_names$short_description[var_names$code == "AGR20"],
                      labels = comma)
 ggsave(filename = "AGR20_FREEMAN&KELLOGG.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -236,7 +237,7 @@ ggplot(data = agro[agro$varname == "AGR24" & agro$site == "WOOSTER.COV", ],
                      labels = comma) +
   ggtitle("WOOSTER.COV")
 ggsave(filename = "AGR24_WOOSTER.COV.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -249,7 +250,7 @@ ggplot(data = agro[agro$varname == "AGR25" & agro$site == "BRADFORD.B1", ],
                      labels = comma) +
   ggtitle("BRADFORD.B1")
 ggsave(filename = "AGR25_BRADFORD.B1.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -262,7 +263,7 @@ ggplot(data = agro[agro$varname == "AGR26" & agro$site == "WOOSTER.COV", ],
                      labels = comma) +
   ggtitle("WOOSTER.COV")
 ggsave(filename = "AGR26_WOOSTER.COV.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -275,7 +276,7 @@ ggplot(data = agro[agro$varname == "AGR32" & agro$site %in% c("STJOHNS", "WOOSTE
   scale_y_continuous(name = var_names$short_description[var_names$code == "AGR32"],
                      labels = comma)
 ggsave(filename = "AGR32_STJOHNS&WOOSTER.COV.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
@@ -288,7 +289,7 @@ ggplot(data = agro[agro$varname == "AGR32" & agro$site %in% c("ONFARM.AUGLAIZE",
   scale_y_continuous(name = var_names$short_description[var_names$code == "AGR32"],
                      labels = comma)
 ggsave(filename = "AGR32_ONFARM.png", 
-       path = "~/GitHub/CSCAP/CAP_Fig/Agro/boxplots/2016-10-26/issues",
+       path = paste0(new_dir, "/issues"),
        width = 12)
 
 
