@@ -61,7 +61,7 @@ soil$newvalue[BDL_rows] <- soil$newvalue[BDL_rows] / 2
 soil <- soil[soil$varname != "SOIL6", ]
 
 # merge (inner join) soil and plot_mng on variable code
-soil <- merge(soil, plot_mng[ , c("id", "rotation", "tillage", "drainage", "nitrogen")], 
+soil <- merge(soil, plot_mng[ , c("id", "rep", "rotation", "tillage", "drainage", "nitrogen")], 
            by = "id", all.x = TRUE)
 
 # fix variable types
@@ -90,6 +90,7 @@ soil$newvalue <- NULL
 
 # rearrange columns of the soil df
 soil <- soil[ , c("id", 
+                  "rep",
                   "site", 
                   "plotid", 
                   "varname", 

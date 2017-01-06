@@ -1,10 +1,11 @@
 # LOAD DATA ---------------------------------------------------------
 # get table from database
+setwd("C:/Users/Gio/Documents")
 library(ggplot2)
 source("~/GitHub/R/My_Source_Codes/CSCAPpostgerDBconnect.R") 
 
 # select 6 for agronomic data and name the object as agro
-wait(1)
+#wait(1)
 6
 agro
 
@@ -151,7 +152,8 @@ for (i in 1:nlevels(agro$varname)) {
     scale_y_continuous(limits = c(ylims$ylim[ylims$varname == varname], NA)) + 
     ggtitle(var_names$short_description[var_names$code == varname]) +
     theme(axis.text.x = element_text(angle = 90),
-          axis.title.y = element_blank()) +
+          axis.title.y = element_blank(),
+          plot.title = element_text(hjust = 0.5)) +
     geom_text(data = obs[obs$varname == varname,], 
               aes(y = 0, label = count, colour = I("goldenrod3")), 
               vjust = 2)
