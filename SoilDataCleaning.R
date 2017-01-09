@@ -53,8 +53,8 @@ soil$short_description <- NULL
 BDL_rows <- grep("<", soil$value)
 # get rid off "< " sign in front of the BDL values and convert all values to numeric
 soil$newvalue <- as.double(sub("< ", "", soil$value))
-# substitude BDL data with half of its values
-soil$newvalue[BDL_rows] <- soil$newvalue[BDL_rows] / 2
+# # substitude BDL data with half of its values
+# soil$newvalue[BDL_rows] <- soil$newvalue[BDL_rows] / 2
 #unique(soil$value[!is.na(soil$value) & is.na(soil$newvalue)])
 
 # get rid of soil texture (SOIL6)
@@ -191,131 +191,15 @@ rm(varname, i)
 
 # PROBLEMATIC DATA (run 1 - 2016-10-26) ----
 
-# AGR1 at ONFARM.SENECA1
-ggplot(data = soil[soil$varname == "AGR1" & soil$site == "ONFARM.SENECA1", ],
+# SOIL13 at FREEMAN
+ggplot(data = soil[soil$varname == "SOIL13" & soil$site == "FREEMAN", ],
        aes(x = as.factor(year), y = value)) +
   geom_boxplot(na.rm = TRUE) +
   scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR1"],
+  scale_y_continuous(name = var_names$short_description[var_names$code == "SOIL13"],
                      labels = comma) +
-  ggtitle("ONFARM.SENECA1")
-ggsave(filename = "AGR1_ONFARM.SENECA1.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-# AGR10 at HOYTVILLE.LTR
-ggplot(data = soil[soil$varname == "AGR10" & soil$site == "HOYTVILLE.LTR", ],
-       aes(x = as.factor(year), y = value)) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR10"],
-                     labels = comma) +
-  ggtitle("HOYTVILLE.LTR")
-ggsave(filename = "AGR10_HOYTVILLE.LTR.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR14 at SEPAC
-ggplot(data = soil[soil$varname == "AGR14" & soil$site == "SEPAC", ],
-       aes(x = as.factor(year), y = value)) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR14"],
-                     labels = comma) +
-  ggtitle("SEPAC")
-ggsave(filename = "AGR14_SEPAC.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR18 at KELLOGG
-ggplot(data = soil[soil$varname == "AGR18" & soil$site == "KELLOGG", ],
-       aes(x = as.factor(year), y = value)) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR18"],
-                     labels = comma) +
-  ggtitle("KELLOGG")
-ggsave(filename = "AGR18_KELLOGG.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR20 at FREEMAN & KELLOGG
-ggplot(data = soil[soil$varname == "AGR20" & soil$site %in% c("KELLOGG", "FREEMAN"), ],
-       aes(x = as.factor(year), y = value)) +
-  facet_grid(. ~ site) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR20"],
-                     labels = comma)
-ggsave(filename = "AGR20_FREEMAN&KELLOGG.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR24 at WOOSTER.COV
-ggplot(data = soil[soil$varname == "AGR24" & soil$site == "WOOSTER.COV", ],
-       aes(x = as.factor(year), y = value)) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR24"],
-                     labels = comma) +
-  ggtitle("WOOSTER.COV")
-ggsave(filename = "AGR24_WOOSTER.COV.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR25 at BRADFORD.B1
-ggplot(data = soil[soil$varname == "AGR25" & soil$site == "BRADFORD.B1", ],
-       aes(x = as.factor(year), y = value)) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR25"],
-                     labels = comma) +
-  ggtitle("BRADFORD.B1")
-ggsave(filename = "AGR25_BRADFORD.B1.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR26 at WOOSTER.COV
-ggplot(data = soil[soil$varname == "AGR26" & soil$site == "WOOSTER.COV", ],
-       aes(x = as.factor(year), y = value)) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR26"],
-                     labels = comma) +
-  ggtitle("WOOSTER.COV")
-ggsave(filename = "AGR26_WOOSTER.COV.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR32 at STJOHNS & WOOSTER.COV
-ggplot(data = soil[soil$varname == "AGR32" & soil$site %in% c("STJOHNS", "WOOSTER.COV"), ],
-       aes(x = as.factor(year), y = value)) +
-  facet_grid(. ~ site) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR32"],
-                     labels = comma)
-ggsave(filename = "AGR32_STJOHNS&WOOSTER.COV.png", 
-       path = paste0(new_dir, "/issues"),
-       width = 12)
-
-
-# AGR32 at ONFARM.AUGLAIZE & ONFARM.SENECA1
-ggplot(data = soil[soil$varname == "AGR32" & soil$site %in% c("ONFARM.AUGLAIZE", "ONFARM.SENECA1"), ],
-       aes(x = as.factor(year), y = value)) +
-  facet_grid(. ~ site) +
-  geom_boxplot(na.rm = TRUE) +
-  scale_x_discrete(name = "Year") +
-  scale_y_continuous(name = var_names$short_description[var_names$code == "AGR32"],
-                     labels = comma)
-ggsave(filename = "AGR32_ONFARM.png", 
+  ggtitle("FREEMAN")
+ggsave(filename = "SOIL13_FREEMAN.png", 
        path = paste0(new_dir, "/issues"),
        width = 12)
 
